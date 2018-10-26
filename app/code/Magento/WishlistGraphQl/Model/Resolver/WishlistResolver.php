@@ -9,13 +9,11 @@ declare(strict_types=1);
 
 namespace Magento\WishlistGraphQl\Model\Resolver;
 
-use Magento\Customer\Api\Data\CustomerInterface;
 use Magento\Framework\GraphQl\Config\Element\Field;
 use Magento\Framework\GraphQl\Query\Resolver\ContextInterface;
 use Magento\Framework\GraphQl\Query\Resolver\Value;
 use Magento\Framework\GraphQl\Query\ResolverInterface;
 use Magento\Framework\GraphQl\Schema\Type\ResolveInfo;
-use Magento\Wishlist\Model\Item;
 use Magento\Wishlist\Model\ResourceModel\Wishlist;
 use Magento\Wishlist\Model\WishlistFactory;
 
@@ -48,24 +46,19 @@ class WishlistResolver implements ResolverInterface
      * @throws \Exception
      * @return mixed|Value
      */
-    public function resolve(Field $field,
-                            $context,
-                            ResolveInfo $info,
-                            array $value = null,
-                            array $args = null)
-    {
-        $customerId = $context->getUserId();
-
+    public function resolve(
+        Field $field,
+        $context,
+        ResolveInfo $info,
+        array $value = null,
+        array $args = null
+    ) {
         /** @var \Magento\Wishlist\Model\Wishlist $wishlist */
         $wishlist = $this->wishlistFactory->create();
-        $this->wishlistResource->load($wishlist, $customerId, 'customer_id');
+        $this->wishlistResource->load($wishlist, $context->getUserId(), 'customer_id');
         return [
-            'items' => array_map(function (Item $item) {
-                return [
-                    'id' => $item->getId(),
-                    'qty' => $item->getData('qty')
-                ];
-            }, $wishlist->getItemCollection()->getItems())
+            'sharing_code' => $wishlist->getSharingCode(),
+            'updated_at' => $wishlist->getUpdatedAt()
         ];
     }
 }
