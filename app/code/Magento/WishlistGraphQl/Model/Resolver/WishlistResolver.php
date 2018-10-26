@@ -14,26 +14,19 @@ use Magento\Framework\GraphQl\Query\Resolver\ContextInterface;
 use Magento\Framework\GraphQl\Query\Resolver\Value;
 use Magento\Framework\GraphQl\Query\ResolverInterface;
 use Magento\Framework\GraphQl\Schema\Type\ResolveInfo;
-use Magento\Wishlist\Model\ResourceModel\Wishlist;
-use Magento\Wishlist\Model\WishlistFactory;
+use Magento\WishlistGraphQl\Model\WishlistDataProvider;
 
 class WishlistResolver implements ResolverInterface
 {
     /**
-     * @var Wishlist
+     * @var WishlistDataProvider
      */
-    private $wishlistResource;
-    /**
-     * @var WishlistFactory
-     */
-    private $wishlistFactory;
+    private $wishlistDataProvider;
 
-    public function __construct(Wishlist $wishlistResource, WishlistFactory $wishlistFactory)
+    public function __construct(WishlistDataProvider $wishlistDataProvider)
     {
-        $this->wishlistResource = $wishlistResource;
-        $this->wishlistFactory = $wishlistFactory;
+        $this->wishlistDataProvider = $wishlistDataProvider;
     }
-
 
     /**
      * Fetches the data from persistence models and format it according to the GraphQL schema.
@@ -53,9 +46,7 @@ class WishlistResolver implements ResolverInterface
         array $value = null,
         array $args = null
     ) {
-        /** @var \Magento\Wishlist\Model\Wishlist $wishlist */
-        $wishlist = $this->wishlistFactory->create();
-        $this->wishlistResource->load($wishlist, $context->getUserId(), 'customer_id');
+        $wishlist = $this->wishlistDataProvider->getWishlistForCustomer($context->getUserId());
         return [
             'sharing_code' => $wishlist->getSharingCode(),
             'updated_at' => $wishlist->getUpdatedAt()

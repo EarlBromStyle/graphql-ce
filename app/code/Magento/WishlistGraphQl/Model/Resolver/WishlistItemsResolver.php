@@ -14,31 +14,20 @@ use Magento\Framework\GraphQl\Query\Resolver\ContextInterface;
 use Magento\Framework\GraphQl\Query\Resolver\Value;
 use Magento\Framework\GraphQl\Query\ResolverInterface;
 use Magento\Framework\GraphQl\Schema\Type\ResolveInfo;
-use Magento\Store\Api\Data\StoreInterface;
-use Magento\Store\Model\StoreManagerInterface;
 use Magento\Wishlist\Model\Item;
-use Magento\Wishlist\Model\ResourceModel\Item\CollectionFactory as WishlistItemCollectionFactory;
+use Magento\WishlistGraphQl\Model\WishlistItemsDataProvider;
 
 class WishlistItemsResolver implements ResolverInterface
 {
-
     /**
-     * @var WishlistItemCollectionFactory
+     * @var WishlistItemsDataProvider
      */
-    private $wishlistItemCollectionFactory;
-    /**
-     * @var StoreManagerInterface
-     */
-    private $storeManager;
+    private $wishlistItemsDataProvider;
 
-    public function __construct(
-        WishlistItemCollectionFactory $wishlistItemCollectionFactory,
-        StoreManagerInterface $storeManager
-    ) {
-        $this->wishlistItemCollectionFactory = $wishlistItemCollectionFactory;
-        $this->storeManager = $storeManager;
+    public function __construct(WishlistItemsDataProvider $wishlistItemsDataProvider)
+    {
+        $this->wishlistItemsDataProvider = $wishlistItemsDataProvider;
     }
-
 
     /**
      * Fetches the data from persistence models and format it according to the GraphQL schema.
@@ -58,14 +47,6 @@ class WishlistItemsResolver implements ResolverInterface
         array $value = null,
         array $args = null
     ) {
-        $storeIds = array_map(function (StoreInterface $store) {
-            return $store->getId();
-        }, $this->storeManager->getStores());
-        $wishlistItemCollection = $this->wishlistItemCollectionFactory->create();
-        $wishlistItemCollection->addCustomerIdFilter($context->getUserId());
-        $wishlistItemCollection->addStoreFilter($storeIds);
-        $wishlistItemCollection->setVisibilityFilter();
-        $wishlistItemCollection->load();
         return array_map(function (Item $wishlistItem) {
             return [
                 'id' => $wishlistItem->getId(),
@@ -74,6 +55,6 @@ class WishlistItemsResolver implements ResolverInterface
                 'added_at' => $wishlistItem->getAddedAt(),
                 'product' => array_merge($wishlistItem->getProduct()->toArray(), ['model' => $wishlistItem->getProduct()])
             ];
-        }, $wishlistItemCollection->getItems());
+        }, $this->wishlistItemsDataProvider->getWishlistItemsForCustomer($context->getUserId()));
     }
 }
