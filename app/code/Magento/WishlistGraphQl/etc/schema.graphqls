@@ -16,5 +16,5 @@ type WishlistItem {
     qty: Float! @doc(description: "todo"),
     description: String! @doc(description: "todo"),
     added_at: String! @doc(description: "todo"),
-    product: ProductInterface!
+    product: ProductInterface @resolver(class: "\\Magento\\WishlistGraphQl\\Model\\Resolver\\WishlistItemsProductsResolver")
 }

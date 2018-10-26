@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 /**
- * WishlistItemTypeResolver
+ * WishlistItemsProductsResolver
  *
  * @copyright Copyright © 2018 brandung GmbH & Co. KG. All rights reserved.
  * @author    david.verholen@brandung.de
@@ -10,24 +10,25 @@ declare(strict_types=1);
 namespace Magento\WishlistGraphQl\Model\Resolver;
 
 use Magento\Framework\GraphQl\Config\Element\Field;
+use Magento\Framework\GraphQl\Exception\GraphQlInputException;
 use Magento\Framework\GraphQl\Query\Resolver\ContextInterface;
 use Magento\Framework\GraphQl\Query\Resolver\Value;
 use Magento\Framework\GraphQl\Query\ResolverInterface;
 use Magento\Framework\GraphQl\Schema\Type\ResolveInfo;
-use Magento\Wishlist\Model\Item;
-use Magento\WishlistGraphQl\Model\WishlistItemsDataProvider;
+use Magento\WishlistGraphQl\Model\WishlistItemsProductDataProvider;
 
-class WishlistItemsResolver implements ResolverInterface
+class WishlistItemsProductsResolver implements ResolverInterface
 {
     /**
-     * @var WishlistItemsDataProvider
+     * @var WishlistItemsProductDataProvider
      */
-    private $wishlistItemsDataProvider;
+    private $productDataProvider;
 
-    public function __construct(WishlistItemsDataProvider $wishlistItemsDataProvider)
+    public function __construct(WishlistItemsProductDataProvider $productDataProvider)
     {
-        $this->wishlistItemsDataProvider = $wishlistItemsDataProvider;
+        $this->productDataProvider = $productDataProvider;
     }
+
 
     /**
      * Fetches the data from persistence models and format it according to the GraphQL schema.
@@ -47,14 +48,11 @@ class WishlistItemsResolver implements ResolverInterface
         array $value = null,
         array $args = null
     ) {
-        return array_map(function (Item $wishlistItem) {
-            return [
-                'id' => $wishlistItem->getId(),
-                'qty' => $wishlistItem->getData('qty'),
-                'description' => (string)$wishlistItem->getDescription(),
-                'added_at' => $wishlistItem->getAddedAt(),
-                'product_id' => (int)$wishlistItem->getProductId()
-            ];
-        }, $this->wishlistItemsDataProvider->getWishlistItemsForCustomer($context->getUserId()));
+        if (!isset($value['product_id'])) {
+            throw new GraphQlInputException(
+                __('Missing key %1 in wishlist item data', ['product_id'])
+            );
+        }
+        return $this->productDataProvider->getProductDataById($value['product_id']);
     }
 }
